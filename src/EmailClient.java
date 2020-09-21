@@ -11,7 +11,8 @@ import java.util.Properties;
 public class EmailClient extends JFrame  {
     private JFrame jFrame;
     private JTextField serverField,usernameField, passwordField,
-            fromField, toField, subjectField, messegeField;
+            fromField, toField, subjectField;
+    private JTextArea messageField;
     private JLabel serverLabel, usernameLabel, passwordLabel,
             fromLabel, toLabel, subjectLabel, statusLabel;
     private JButton sendBtn, outlookBtn, googleBtn;
@@ -29,7 +30,6 @@ public class EmailClient extends JFrame  {
             fromField = new JTextField();
             toField = new JTextField();
             subjectField = new JTextField();
-            messegeField = new JTextField();
             serverLabel = new JLabel("Server");
             usernameLabel = new JLabel("Username");
             passwordLabel = new JLabel("Password");
@@ -37,7 +37,7 @@ public class EmailClient extends JFrame  {
             fromLabel = new JLabel("From");
             toLabel = new JLabel("To");
             subjectLabel = new JLabel("Subject");
-            messegeField = new JTextField();
+            messageField = new JTextArea();
             sendBtn = new JButton("Send");
 
 
@@ -57,7 +57,7 @@ public class EmailClient extends JFrame  {
             fromField.setBounds(100,130, 100, 20);
             toField.setBounds(280,130, 100, 20);
             subjectField.setBounds(100,150, 100, 20);
-            messegeField.setBounds(100,210, 100, 20);
+            messageField.setBounds(100,210, 300, 300);
             sendBtn.setBounds(100,240,100, 40);
 
 
@@ -79,7 +79,7 @@ public class EmailClient extends JFrame  {
             this.add(fromField);
             this.add(toField);
             this.add(subjectField);
-            this.add(messegeField);
+            this.add(messageField);
             this.add(sendBtn);
             sendBtn.addActionListener(this::sendAction);
             outlookBtn.addActionListener(this::outlookAction);
@@ -101,7 +101,7 @@ public class EmailClient extends JFrame  {
                 || fromField.getText().isBlank()
                 || toField.getText().isBlank()
                 || subjectField.getText().isBlank()
-                || messegeField.getText().isBlank()){
+                || messageField.getText().isBlank()){
             return false;
         } else {
             return true;
@@ -115,7 +115,7 @@ public class EmailClient extends JFrame  {
         fromField.setText("");
         toField.setText("");
         subjectField.setText("");
-        messegeField.setText("");
+        messageField.setText("");
     }
 
     public void setStatus(String newStatus){
@@ -141,8 +141,9 @@ public class EmailClient extends JFrame  {
             toAdress = toField.getText();
             fromAdress = fromField.getText();
             subject = subjectField.getText();
-            msg = messegeField.getText();
+            msg = messageField.getText();
             Email email = new Email(this, username, password, server, toAdress, fromAdress, subject, msg);
+            System.out.println("Created new email");
             email.createSession();
         } else  {
             setStatus("Status: Could not send email.");
@@ -154,8 +155,13 @@ public class EmailClient extends JFrame  {
 // -------------- MAIN ---------------------------
     public static void main(String[] args) {
         EmailClient emailClient = new EmailClient();
+
     }
 }
+
+
+// -------------- MAIN ---------------------------
+
 
 class Email {
     EmailClient emailClient;
@@ -164,14 +170,20 @@ class Email {
     Session session;
     Message message;
 
+
     public Email(EmailClient emailClient,String username, String password, String server, String toAdress,String fromAdress, String subject, String messege){
         properties = new Properties();
         this.server = server;
         this.fromAdress = fromAdress;
-        properties.put("mail.smtp.host",server);
-        properties.put("mail.smtp.port","587");
+        properties.put("mail.transport.protocol", "smtp");
+        properties.put("mail.smtp.host", server);
         properties.put("mail.smtp.starttls.enable", "true");
         properties.put("mail.smtp.auth","true");
+        properties.put("mail.smtp.port","587");
+        properties.put("mail.smtp.user", username);
+        properties.put("mail.smtp.password", password);
+        properties.put("mail.smtp.quitwait", "false");
+
         this.username = username;
         this.password = password;
         this.server = server;
@@ -179,13 +191,16 @@ class Email {
         this.subject = subject;
         this.msg = messege;
         this.emailClient = emailClient;
+        System.out.println("Email created");
+
+
     }
 
 
 
 
     public void setErrorMessage(){
-        emailClient.setStatus("Status: Email sent succesfully!");
+        emailClient.setStatus("Status: Error - email not sent.");
     }
 
     public void setSuccessMessage(){
@@ -193,6 +208,7 @@ class Email {
     }
 
     public void createSession(){
+        System.out.println("Create session");
         emailClient.setStatus("Status: Sending email....");
         session =  Session.getInstance(properties, new Authenticator() {
             @Override
@@ -203,36 +219,35 @@ class Email {
         createMessege();
     }
 
-
-
     public void createMessege() throws NullPointerException{
+        System.out.println("Create messege");
         message = prepMessege();
         try{
-        Transport.send(message);
-        setSuccessMessage();
-        emailClient.clearInput();
+            System.out.println("Sending message");
+            Transport.send(message);
+            System.out.println("Message sent");
+            setSuccessMessage();
+            emailClient.clearInput();
     } catch (MessagingException me){
+            System.out.print(me);
             setErrorMessage();
+
         }
     }
 
     public Message prepMessege() throws NullPointerException{
         try {
+            System.out.println("Prepping message");
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(username, fromAdress));
+
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(toAdress));
             message.setSubject(subject);
             message.setText(msg);
             return message;
-        } catch (AddressException ae) {
+        } catch (Exception ae) {
             setErrorMessage();
             System.out.print(ae);
-        } catch (MessagingException me){
-            setErrorMessage();
-            System.out.print(me);
-        } catch (UnsupportedEncodingException uee){
-            setErrorMessage();
-            System.out.print(uee);
         }
         return null;
     }
