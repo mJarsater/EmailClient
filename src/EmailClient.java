@@ -9,7 +9,6 @@ import java.util.Properties;
 
 
 public class EmailClient extends JFrame  {
-    private JFrame jFrame;
     private JTextField serverField,usernameField, passwordField,
             fromField, toField, subjectField;
     private JTextArea messageField;
@@ -19,7 +18,6 @@ public class EmailClient extends JFrame  {
     private String username, password, server, toAdress, fromAdress,subject, msg;
 
     public EmailClient(){
-            this.jFrame = this;
             this.setTitle("Email client");
             sendBtn = new JButton("Send");
             outlookBtn = new JButton("Outlook server");
@@ -88,7 +86,8 @@ public class EmailClient extends JFrame  {
 
             this.setSize(600,600);
             this.setLayout(null);
-            this.setVisible(true);
+            this.setVisible(true);setDefaultCloseOperation(EXIT_ON_CLOSE);
+
 
 
     }
