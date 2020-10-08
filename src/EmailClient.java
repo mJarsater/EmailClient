@@ -1,10 +1,8 @@
 import javax.mail.*;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 
@@ -17,9 +15,11 @@ public class EmailClient extends JFrame  {
     private JButton sendBtn, outlookBtn, googleBtn;
     private String username, password, server, toAdress, fromAdress,subject, msg;
 
+
+    // Konstruktor för klassen EmailClient - GUI
     public EmailClient(){
             this.setTitle("Email client");
-            sendBtn = new JButton("Send");
+
             outlookBtn = new JButton("Outlook server");
             googleBtn = new JButton("Gmail server");
             serverField = new JTextField();
@@ -55,8 +55,8 @@ public class EmailClient extends JFrame  {
             fromField.setBounds(100,130, 100, 20);
             toField.setBounds(280,130, 100, 20);
             subjectField.setBounds(100,150, 100, 20);
-            messageField.setBounds(100,210, 300, 300);
-            sendBtn.setBounds(100,240,100, 40);
+            messageField.setBounds(10,210, 500, 330);
+            sendBtn.setBounds(400,130,100, 40);
 
 
 
@@ -83,7 +83,6 @@ public class EmailClient extends JFrame  {
             outlookBtn.addActionListener(this::outlookAction);
             googleBtn.addActionListener(this::googleAction);
 
-
             this.setSize(600,600);
             this.setLayout(null);
             this.setVisible(true);setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -92,7 +91,10 @@ public class EmailClient extends JFrame  {
 
     }
 
-
+    /* Metod för att kolla att alla fält
+    är ifyllda, returnar sant om det stämmer,
+    annars false.
+    */
     public synchronized boolean checkInput(){
         if(serverField.getText().isBlank()
                 || usernameField.getText().isBlank()
@@ -106,7 +108,7 @@ public class EmailClient extends JFrame  {
             return true;
     }
     }
-
+    // Metod som rensar alla fält
     public void clearInput(){
         serverField.setText("");
         usernameField.setText("");
@@ -116,21 +118,31 @@ public class EmailClient extends JFrame  {
         subjectField.setText("");
         messageField.setText("");
     }
-
+    /*Metod som sätter parametern
+     som  ny status*/
     public void setStatus(String newStatus){
         statusLabel.setText(newStatus);
     }
 
+    /*Metod som sätter server till
+    outlookserver*/
     public void outlookAction(ActionEvent e){
         serverField.setText("");
         serverField.setText("smtp-mail.outlook.com");
     }
-
+    /*Metod som sätter server till
+     gmailserver*/
     public void googleAction(ActionEvent e){
         serverField.setText("");
         serverField.setText("smtp.gmail.com");
     }
 
+    /*Metod som skickar mailet
+    Kollar först så alla fällt är ifyllda.
+    Skapar sedan ett email av inputen
+    och kallar på metoden create session för det
+    mailet.
+    */
     public void sendAction(ActionEvent e) {
         boolean checkText = checkInput();
         if (checkText) {
@@ -157,9 +169,7 @@ public class EmailClient extends JFrame  {
 
     }
 }
-
-
-// -------------- MAIN ---------------------------
+// -------------- MAIN END -----------------------
 
 
 class Email {
@@ -169,11 +179,21 @@ class Email {
     Session session;
     Message message;
 
-
+    // Konstruktor för klassen Email
     public Email(EmailClient emailClient,String username, String password, String server, String toAdress,String fromAdress, String subject, String messege){
-        properties = new Properties();
         this.server = server;
         this.fromAdress = fromAdress;
+        this.username = username;
+        this.password = password;
+        this.server = server;
+        this.toAdress = toAdress;
+        this.subject = subject;
+        this.msg = messege;
+        this.emailClient = emailClient;
+        /* Skapar ett nytt objekt av klassen Properties
+        och fyller med nödvändig information,
+        bland annat användarnamn och lösenord för verifiering*/
+        properties = new Properties();
         properties.put("mail.transport.protocol", "smtp");
         properties.put("mail.smtp.host", server);
         properties.put("mail.smtp.starttls.enable", "true");
@@ -182,14 +202,6 @@ class Email {
         properties.put("mail.smtp.user", username);
         properties.put("mail.smtp.password", password);
         properties.put("mail.smtp.quitwait", "false");
-
-        this.username = username;
-        this.password = password;
-        this.server = server;
-        this.toAdress = toAdress;
-        this.subject = subject;
-        this.msg = messege;
-        this.emailClient = emailClient;
         System.out.println("Email created");
 
 
@@ -197,27 +209,35 @@ class Email {
 
 
 
-
+    // Metod som sätter ett felmeddelande
     public void setErrorMessage(){
         emailClient.setStatus("Status: Error - email not sent.");
     }
 
+    // Metod som sätter ett successmeddelande
     public void setSuccessMessage(){
         emailClient.setStatus("Status: Email sent succesfully!");
     }
 
+    //Metod som skapar en session för emailet.
     public void createSession(){
         System.out.println("Create session");
         emailClient.setStatus("Status: Sending email....");
+        /* Skapar en nu session och authenticator som
+        * kollar så att lösenord och användarnamn stämmer.
+        * Kallar sen på metoden createMessage*/
         session =  Session.getInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username,password);
             }
         });
+
         createMessege();
     }
 
+    /*Metod som först kallar på metoden
+    * prepMessage och sedan skickar mailet.*/
     public void createMessege() throws NullPointerException{
         System.out.println("Create messege");
         message = prepMessege();
@@ -234,6 +254,9 @@ class Email {
         }
     }
 
+    /* Metod som skapar ett MimeMessage och fyller det
+    * med informationen i de ifyllda fälten. Returnerar
+    * sedan de färdigpackede meddelandet.*/
     public Message prepMessege() throws NullPointerException{
         try {
             System.out.println("Prepping message");
